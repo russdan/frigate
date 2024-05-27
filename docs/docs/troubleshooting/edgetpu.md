@@ -12,6 +12,29 @@ There are many possible causes for a USB coral not being detected and some are O
 
 If the coral does not initialize then Frigate can not interface with it. Some common reasons for the USB based Coral not initializing are:
 
+### Initialization Process hasn't worked
+
+On first start with a new device it needs to initialize to change the device from `1a6e:089a Global Unichip Corp.` to `18d1:9302 Google Inc.`. To initiate this process manually follow the instructions here:
+
+[Fix Google Coral USB Vendor ID](https://github.com/tnyeanderson/zet/tree/main/20240114030411) 
+
+Note there is an error (a missing `.`) in the docker build command (fixed in the instructions below).
+
+Create a `Dockerfile` containing:
+```
+FROM ubuntu
+WORKDIR /app
+RUN apt-get update && apt-get install -y wget dfu-util
+RUN wget https://github.com/google-coral/libedgetpu/raw/master/driver/usb/apex_latest_single_ep.bin
+CMD ["dfu-util", "-D", "apex_latest_single_ep.bin", "-d", "1a6e:089a", "-R"]
+```
+Run it with:
+```
+docker build . -t coral-init
+docker run --rm --device /dev/bus/usb coral-init
+```
+Once it completes, your Coral should have the correct USB Vendor ID.
+
 ### Not Enough Power
 
 The USB coral can draw up to 900mA and this can be too much for some on-device USB ports, especially for small board computers like the RPi. If the coral is not initializing then some recommended steps are:
